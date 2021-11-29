@@ -7,7 +7,7 @@ import org.apache.spark.sql.SparkSession;
 
 import static org.apache.spark.sql.functions.col;
 
-public class DataSetExample {
+public class UntypedDatasetOperations {
     public static void main(String[] args) {
         SparkConf conf = new SparkConf()
                 .setAppName("Spark SQL Demo")

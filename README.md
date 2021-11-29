@@ -221,6 +221,56 @@ public class RunningSQLQueriesProgrammatically {
 
 ```
 
+### 5. Global Temporary View
+
+Spark SQL 中的临时视图是会话范围的，如果创建它的会话终止，它就会消失。 如果我们希望有一个在所有会话之间共享的临时视图并在 Spark 应用程序终止之前保持活动状态，可以创建一个全局临时视图。 全局临时视图与系统保留的数据库 `global_temp` 相关联，我们必须使用限定名称来引用它，例如 `SELECT * FROM global_temp.view1`。
+
+示例：
+
+```java
+import org.apache.spark.SparkConf;
+import org.apache.spark.sql.AnalysisException;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
+public class GlobalTemporaryView {
+    public static void main(String[] args) throws AnalysisException {
+        SparkConf conf = new SparkConf()
+                .setAppName("Spark SQL Demo")
+                .setMaster("local");
+
+        SparkSession spark = SparkSession
+                .builder()
+                .appName("Spark SQL Demo")
+                .config(conf)
+                .getOrCreate();
+
+        Dataset<Row> df = spark.read()
+                .json("src/main/resources/people.json");
+
+        df.createGlobalTempView("people");
+        spark.sql("SELECT * FROM global_temp.people").show();
+        // +----+-------+
+        // | age|   name|
+        // +----+-------+
+        // |null|Michael|
+        // |  30|   Andy|
+        // |  19| Justin|
+        // +----+-------+
+
+        spark.newSession().sql("SELECT * FROM global_temp.people").show();
+        // +----+-------+
+        // | age|   name|
+        // +----+-------+
+        // |null|Michael|
+        // |  30|   Andy|
+        // |  19| Justin|
+        // +----+-------+
+    }
+}
+```
+
 
 
 

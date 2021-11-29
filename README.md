@@ -30,6 +30,46 @@ public class SparkSessionInit {
 
 ### 2. Creating DataFrames
 
+使用 SparkSession，应用程序可以从现有的 RDD，Hive 表或是 Spark 数据源中创建 DataFrames。
+
+示例：基与 JSON 文件的内容创建一个 DataFrame
+
+```java
+import org.apache.spark.SparkConf;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
+public class CreateDataFrameFromJsonFile {
+    public static void main(String[] args) {
+        SparkConf conf = new SparkConf()
+                .setAppName("Spark SQL Demo")
+                .setMaster("local");
+
+        SparkSession spark = SparkSession
+                .builder()
+                .appName("Spark SQL Demo")
+                .config(conf)
+                .getOrCreate();
+
+        Dataset<Row> df = spark.read()
+                .json("src/main/resources/people.json");
+
+        df.show();
+        // +----+-------+
+        // | age|   name|
+        // +----+-------+
+        // |null|Michael|
+        // |  30|   Andy|
+        // |  19| Justin|
+        // +----+-------+
+    }
+}
+
+```
+
+
+
 ### 3. Untyped Dataset
 
 

@@ -560,7 +560,13 @@ public class ProgrammaticallySpecifyingTheSchema {
 }
 ```
 
+### 8. Scalar Functions
 
+标量函数是每行返回一个值的函数，与聚合函数相反，聚合函数返回一组行的值。 Spark SQL 支持多种内置标量函数。 它还支持用户定义的标量函数。
+
+### 9. Aggregate Functions
+
+聚合函数是在一组行上返回单个值的函数。 内置聚合函数提供了常用的聚合函数，例如 `count()`、`count_distinct()`、`avg()`、`max()`、`min()`等。用户不限于预定义的聚合函数，可以创建自己的聚合函数。 有关用户定义聚合函数的更多详细信息，请参阅用户定义聚合函数的文档。
 
 ### RDD，DataFrame，DataSet 的区别
 

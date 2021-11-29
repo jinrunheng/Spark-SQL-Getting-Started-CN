@@ -2,6 +2,8 @@
 
 [原文链接](http://spark.apache.org/docs/latest/sql-getting-started.html)
 
+**所有的示例基于 Java**
+
 ### 1. Starting Point: SparkSession
 
 Spark 中所有功能的入口点是 SparkSession。如果要创建出一个基本的 SparkSession，只需要使用 `SparkSession.builder()` 方法：
@@ -68,9 +70,118 @@ public class CreateDataFrameFromJsonFile {
 
 ```
 
+### 3. Untyped Dataset Operations (aka DataFrame Operations)
+
+我们来看一下 RDD，DataFrames 与 DataSet 的区别：
+
+![Difference between DataFrame, Dataset, and RDD in Spark - Stack Overflow](https://tva1.sinaimg.cn/large/008i3skNgy1gww2lal7ssj30go0c1wfk.jpg)
+
+如果同样的数据都给到这三种数据结构，它们分别计算之后，都会给出相同的结果，不同的是它们的执行效率和执行方式。
+
+在后期的 Spark 版本中，DataSet 会逐步取代 RDD 与 DataFrame 称为唯一的 API 接口。
+
+**RDD**
+
+- RDD 是一个懒执行的不可变的可以支持 Lambda 表达式的并行数据集合
+- RDD 简单，API 人性化程度高
+- RDD 的劣势是性能限制，它是一个 JVM 驻内存对象，这也就决定了存在 GC 的限制和数据增加时 Java 序列化成本的升高
+
+**DataFrame**
+
+![111](https://tva1.sinaimg.cn/large/008i3skNgy1gww2ve4tqbj30jb0b50to.jpg)
+
+从上图中可以直观地体现出 DataFrame 与 RDD 的区别。
+
+左侧的 RDD[Person] 虽然以 Person 为类型参数，但 Spark 框架本身不了解 Person 类的内部结构。而右侧的DataFrame 却提供了详细的结构信息，使得 Spark SQL 可以清楚地知道该数据集中包含哪些列，每列的名称和类型各是什么。DataFrame 为数据提供了 Schema 的视图，我们可以完全将它当作数据库中的一张表来对待。
+
+在功能上，DataFrame 除了提供了比 RDD 更丰富的算子外，更重要的特点是提升了执行效率，减少数据读取以及对执行计划的优化等等。
+
+**DataSet**
+
+- DataSet 是 DataFrame API 的一个扩展，是 Spark 最新的数据抽象
+
+- 用户友好的 API 风格，既具有类型安全检查，也具有 DataFrame 的查询优化特性
+- DataSet 支持编解码器，当需要访问非堆上的数据时可以避免反序列化整个对象，提高了效率
+- 样例类被用来在 DataSet 中定义数据的结构信息，样例类中每个属性的名称直接映射到 DataSet 中的字段名称
+- DataFrame 是 DataSet 的特例，DataFrame=DataSet[Row] ，所以可以通过 as 方法将 DataFrame 转换为DataSet。Row是一个类型，跟Car、Person这些的类型一样，所有的表结构信息都可用 Row 来表示
+- DataSet 是强类型的。比如可以有 DataSet[Car]，DataSet[Person]
 
 
-### 3. Untyped Dataset
+
+使用 DataSet 的结构化数据处理基本示例：
+
+```java
+import org.apache.spark.SparkConf;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
+import static org.apache.spark.sql.functions.col;
+
+public class DataSetExample {
+    public static void main(String[] args) {
+        SparkConf conf = new SparkConf()
+                .setAppName("Spark SQL Demo")
+                .setMaster("local");
+
+        SparkSession spark = SparkSession
+                .builder()
+                .appName("Spark SQL Demo")
+                .config(conf)
+                .getOrCreate();
+
+        Dataset<Row> df = spark.read()
+                .json("src/main/resources/people.json");
+
+        df.printSchema();
+        // root
+        // |-- age: long (nullable = true)
+        // |-- name: string (nullable = true)
+
+        df.select("name").show();
+        // +-------+
+        // |   name|
+        // +-------+
+        // |Michael|
+        // |   Andy|
+        // | Justin|
+        // +-------+
+        df.select(col("name"),col("age").plus(1)).show();
+        // +-------+---------+
+        // |   name|(age + 1)|
+        // +-------+---------+
+        // |Michael|     null|
+        // |   Andy|       31|
+        // | Justin|       20|
+        // +-------+---------+
+
+        // Select people older than 21
+        df.filter(col("age").gt(21)).show();
+        // +---+----+
+        // |age|name|
+        // +---+----+
+        // | 30|Andy|
+        // +---+----+
+
+        // Count people by age
+        df.groupBy("age").count().show();
+        // +----+-----+
+        // | age|count|
+        // +----+-----+
+        // |  19|    1|
+        // |null|    1|
+        // |  30|    1|
+        // +----+-----+
+    }
+}
+
+```
+
+
+
+
+
+
 
 
 
